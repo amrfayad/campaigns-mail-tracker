@@ -1,6 +1,6 @@
 <?php
 
-namespace amrfayad\MailTracker\Model;
+namespace amrfayad\CampaignMailTracker\Model;
 
 use Illuminate\Database\Eloquent\Model;
 
