@@ -4,7 +4,7 @@
     "description": "Logs and tracks all outgoing emails from Laravel",
     "keywords": [
         "amrfayad",
-        "MailTracker"
+        "CampaignMailTracker"
     ],
     "homepage": "https://github.com/amrfayad/campaigns-mail-tracker",
     "license": "MIT",
