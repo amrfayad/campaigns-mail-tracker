@@ -1,8 +1,8 @@
 <?php
 
-namespace amrfayad\MailTracker\Events;
+namespace amrfayad\CampaignMailTracker\Events;
 
-use amrfayad\MailTracker\Model\SentEmail;
+use amrfayad\CampaignMailTracker\Model\SentEmail;
 use App\Events\Event;
 use Illuminate\Queue\SerializesModels;
 

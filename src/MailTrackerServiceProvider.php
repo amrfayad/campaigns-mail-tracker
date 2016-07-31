@@ -1,6 +1,6 @@
 <?php
 
-namespace amrfayad\MailTracker;
+namespace amrfayad\CampaignMailTracker;
 
 use Illuminate\Support\ServiceProvider;
 use Illuminate\Support\Facades\Route;
@@ -28,7 +28,7 @@ class MailTrackerServiceProvider extends ServiceProvider
         // Publish pieces
         if (!$this->isLumen()) {
             $this->publishes([
-                __DIR__.'/../config/mail-tracker.php' => config_path('mail-tracker.php')
+                __DIR__.'/../config/campaign-mail-tracker.php' => config_path('campaign-mail-tracker.php')
             ], 'config');
             $this->publishes([
                 __DIR__.'/../migrations/2016_03_01_193027_create_sent_emails_table.php' => database_path('migrations/2016_03_01_193027_create_sent_emails_table.php')
@@ -39,8 +39,8 @@ class MailTrackerServiceProvider extends ServiceProvider
         $this->app['mailer']->getSwiftMailer()->registerPlugin(new MailTracker());
 
         // Install the routes
-        $config = $this->app['config']->get('mail-tracker.route', []);
-        $config['namespace'] = 'amrfayad\MailTracker';
+        $config = $this->app['config']->get('campaign-mail-tracker.route', []);
+        $config['namespace'] = 'amrfayad\CampaignMailTracker';
 
         if (!$this->isLumen()) {
             Route::group($config, function()

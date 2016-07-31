@@ -1,6 +1,6 @@
 <?php
 
-namespace amrfayad\MailTracker;
+namespace amrfayad\CampaignMailTracker;
 
 class SkeletonClass
 {

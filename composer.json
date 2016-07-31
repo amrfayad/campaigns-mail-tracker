@@ -1,12 +1,12 @@
 {
-    "name": "amrfayad/mail-tracker",
+    "name": "amrfayad/campaigns-mail-tracker",
     "type": "library",
     "description": "Logs and tracks all outgoing emails from Laravel",
     "keywords": [
         "amrfayad",
         "MailTracker"
     ],
-    "homepage": "https://github.com/amrfayad/mail-tracker",
+    "homepage": "https://github.com/amrfayad/campaigns-mail-tracker",
     "license": "MIT",
     "authors": [
         {
@@ -30,12 +30,12 @@
     },
     "autoload": {
         "psr-4": {
-            "amrfayad\\MailTracker\\": "src"
+            "amrfayad\\CampaignMailTracker\\": "src"
         }
     },
     "autoload-dev": {
         "psr-4": {
-            "amrfayad\\MailTracker\\": "tests"
+            "amrfayad\\CampaignMailTracker\\": "tests"
         }
     },
     "scripts": {
