@@ -40,9 +40,9 @@ class MailTracker implements \Swift_Events_SendListener {
         }    	
 
     	Model\SentEmail::create([
-                        'user_id'=>  $this->user_id,
-                        'campaign_id'=>  $this->campaign_id,
-            		'hash'=>$hash,
+                'user_id'=>  $this->user_id,
+                'campaign_id'=>  $this->campaign_id,
+            	'hash'=>$hash,
     			'headers'=>$headers->toString(),
     			'sender'=>$headers->get('from')->getFieldBody(),
     			'recipient'=>$headers->get('to')->getFieldBody(),
@@ -51,8 +51,8 @@ class MailTracker implements \Swift_Events_SendListener {
     		]);
 
     	// Purge old records
-    	if(config('mail-tracker.expire-days') > 0) {
-    		Model\SentEmail::where('created_at','<',\Carbon\Carbon::now()->subDays(config('mail-tracker.expire-days')))->delete();
+    	if(config('campaigns-mail-tracker.expire-days') > 0) {
+    		Model\SentEmail::where('created_at','<',\Carbon\Carbon::now()->subDays(config('campaigns-mail-tracker.expire-days')))->delete();
     	}
 	}
 
@@ -63,10 +63,10 @@ class MailTracker implements \Swift_Events_SendListener {
 
     protected function addTrackers($html, $hash)
     {
-    	if(config('mail-tracker.inject-pixel')) {
+    	if(config('campaigns-mail-tracker.inject-pixel')) {
 	    	$html = $this->injectTrackingPixel($html, $hash);
     	}
-    	if(config('mail-tracker.track-links')) {
+    	if(config('campaigns-mail-tracker.track-links')) {
     		$html = $this->injectLinkTracker($html, $hash);
     	}
 
