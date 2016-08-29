@@ -1,135 +1,153 @@
-<?php 
+<?php
 
 namespace amrfayad\CampaignMailTracker;
 
 class MailTracker implements \Swift_Events_SendListener {
 
-	protected $hash;
-        protected $user_id;
-        protected $campaign_id;
-        
-        
-  
+    protected $hash;
+    protected $user_id;
+    protected $campaign_id;
 
-        public function __construct($user_id ,$campaign_id ) {
-            $this->user_id = $user_id ;
-            $this->campaign_id = $campaign_id ; 
-        }
-	/**
-	 * Inject the tracking code into the message
-	 */
-	public function beforeSendPerformed(\Swift_Events_SendEvent $event)
-	{
-		$message = $event->getMessage();
-    	$headers = $message->getHeaders();
-    	$hash = str_random(32);
+    public function __construct($user_id, $campaign_id) {
+        $this->user_id = $user_id;
+        $this->campaign_id = $campaign_id;
+    }
 
-    	$original_content = $message->getBody();
-
+    /**
+     * Inject the tracking code into the message
+     */
+    public function beforeSendPerformed(\Swift_Events_SendEvent $event) {
+        $message = $event->getMessage();
+        $headers = $message->getHeaders();
+        $headers->addTextHeader("campaignID", $this->campaign_id);
+        $headers->addTextHeader("userID", $this->user_id);
+        $hash = str_random(32);
+        $original_content = $message->getBody();
         if ($message->getContentType() === 'text/html' ||
-            ($message->getContentType() === 'multipart/alternative' && $message->getBody())
+                ($message->getContentType() === 'multipart/alternative' && $message->getBody())
         ) {
-        	$message->setBody($this->addTrackers($message->getBody(), $hash));
+            $message->setBody($this->addTrackers($message->getBody(), $hash));
         }
-
         foreach ($message->getChildren() as $part) {
             if (strpos($part->getContentType(), 'text/html') === 0) {
                 $converter->setHTML($part->getBody());
                 $part->setBody($this->addTrackers($message->getBody(), $hash));
             }
-        }    	
+        }
+        Model\SentEmail::create([
+            'user_id' => $this->user_id,
+            'campaign_id' => $this->campaign_id,
+            'hash' => $hash,
+            'headers' => $headers->toString(),
+            'sender' => $headers->get('from')->getFieldBody(),
+            'recipient' => $headers->get('to')->getFieldBody(),
+            'subject' => $headers->get('subject')->getFieldBody(),
+            'content' => $original_content,
+        ]);
 
-    	Model\SentEmail::create([
-                'user_id'=>  $this->user_id,
-                'campaign_id'=>  $this->campaign_id,
-            	'hash'=>$hash,
-    			'headers'=>$headers->toString(),
-    			'sender'=>$headers->get('from')->getFieldBody(),
-    			'recipient'=>$headers->get('to')->getFieldBody(),
-    			'subject'=>$headers->get('subject')->getFieldBody(),
-    			'content'=>$original_content,
-    		]);
-
-    	// Purge old records
-    	if(config('campaigns-mail-tracker.expire-days') > 0) {
-    		Model\SentEmail::where('created_at','<',\Carbon\Carbon::now()->subDays(config('campaigns-mail-tracker.expire-days')))->delete();
-    	}
-	}
-
-    public function sendPerformed(\Swift_Events_SendEvent $event)
-    {
-    	//
+        // Purge old records
+        if (config('campaigns-mail-tracker.expire-days') > 0) {
+            Model\SentEmail::where('created_at', '<', \Carbon\Carbon::now()->subDays(config('campaigns-mail-tracker.expire-days')))->delete();
+        }
     }
 
-    protected function addTrackers($html, $hash)
-    {
-    	if(config('campaigns-mail-tracker.inject-pixel')) {
-	    	$html = $this->injectTrackingPixel($html, $hash);
-    	}
-    	if(config('campaigns-mail-tracker.track-links')) {
-    		$html = $this->injectLinkTracker($html, $hash);
-    	}
-
-    	return $html;
+    public function sendPerformed(\Swift_Events_SendEvent $event) {
+        //
     }
 
-    protected function injectTrackingPixel($html, $hash)
-    {
-    	// Append the tracking url
-    	$tracking_pixel = '<img src="'.action('\amrfayad\CampaignMailTracker\MailTrackerController@getT',[$hash]).'" />';
+    protected function addTrackers($html, $hash) {
+        if (config('campaigns-mail-tracker.inject-pixel')) {
+            $html = $this->injectTrackingPixel($html, $hash);
+        }
+        if (config('campaigns-mail-tracker.track-links')) {
+            $html = $this->injectLinkTracker($html, $hash);
+        }
 
-    	$linebreak = str_random(32);
-    	$html = str_replace("\n",$linebreak,$html);
-
-    	if(preg_match("/^(.*<body[^>]*>)(.*)$/", $html, $matches)) {
-    		$html = $matches[1].$tracking_pixel.$matches[2];
-    	} else {
-    		$html = $tracking_pixel . $html;
-    	}
-    	$html = str_replace($linebreak,"\n",$html);
-
-    	return $html;
+        return $html;
     }
 
-    protected function injectLinkTracker($html, $hash)
-    {
-    	$this->hash = $hash;
+    protected function injectTrackingPixel($html, $hash) {
+        // Append the tracking url
+        $tracking_pixel = '<img src="' . action('\amrfayad\CampaignMailTracker\MailTrackerController@getT', [$hash]) . '" />';
 
-    	$html = preg_replace_callback("/(<a[^>]*href=['\"])([^'\"]*)/",
-    			array($this, 'inject_link_callback'),
-    			$html);
+        $linebreak = str_random(32);
+        $html = str_replace("\n", $linebreak, $html);
 
-    	return $html;
+        if (preg_match("/^(.*<body[^>]*>)(.*)$/", $html, $matches)) {
+            $html = $matches[1] . $tracking_pixel . $matches[2];
+        } else {
+            $html = $tracking_pixel . $html;
+        }
+        $html = str_replace($linebreak, "\n", $html);
+
+        return $html;
     }
 
-    protected function inject_link_callback($matches)
-    {
+    protected function injectLinkTracker($html, $hash) {
+        $this->hash = $hash;
+
+        $html = preg_replace_callback("/(<a[^>]*href=['\"])([^'\"]*)/", array($this, 'inject_link_callback'), $html);
+
+        return $html;
+    }
+
+    protected function inject_link_callback($matches) {
         if (empty($matches[2])) {
             $url = app()->make('url')->to('/');
         } else {
             $url = $matches[2];
         }
-        
-    	return $matches[1].action('\amrfayad\CampaignMailTracker\MailTrackerController@getL',
-    		[
-    			MailTracker::hash_url($url),
-    			$this->hash
-    		]);
+
+        return $matches[1] . action('\amrfayad\CampaignMailTracker\MailTrackerController@getL', [
+                    MailTracker::hash_url($url),
+                    $this->hash
+        ]);
     }
 
-    static public function hash_url($url)
-    {
+    static public function hash_url($url) {
         // Replace "/" with "$"
-        return str_replace("/","$",base64_encode($url));
+        return str_replace("/", "$", base64_encode($url));
     }
-    
-    static public function cheakIfCampaigSendedbefore($user_id , $campaign_id){
+
+    static public function cheakIfCampaigSendedbefore($user_id, $campaign_id) {
         return Model\SentEmail::where(
-                        [
-                            ['user_id',$user_id],
-                            ['campaign_id',$campaign_id],
+                                [
+                                    ['user_id', $user_id],
+                                    ['campaign_id', $campaign_id],
                         ])
-			->first();
-        
+                        ->first();
     }
+    static public function getBounces($data) {
+        $bounces = new AmazonSESBounces();
+        $bounces->setGmailCredentials(
+                $data['email'], $data['password']);
+        if ($bounces->connect()) {
+            $response = $bounces->getEmailsThatBounced();
+            if (count($response) > 0) {
+                foreach ($response as $value) {
+                    Model\SentEmail::where(
+                            [
+                                ['user_id', $value['user_id']],
+                                ['campaign_id', $value['campaign_id']],
+                    ])->update(
+                            [
+                                'bounces' => 1,
+                                'bounce_type' => 'Hard Bounce'
+                    ]);
+                }
+                $bounces->deleteEmailsFound();
+            }
+            $bounces->end();
+            return [
+                'status' => 'sucess',
+                'message' => 'Bounces Emails Inserted to data Base'
+            ];
+        } else {
+            return [
+                'status' => 'fail',
+                'message' => $bounces->getErrors()
+            ];
+        }
+    }
+
 }

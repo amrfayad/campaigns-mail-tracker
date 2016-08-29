@@ -11,7 +11,7 @@ use App\Http\Controllers\Controller;
 
 use amrfayad\CampaignMailTracker\Events\ViewEmailEvent;
 use amrfayad\CampaignMailTracker\Events\LinkClickedEvent;
-
+use mrfayad\CampaignMailTracker\AmazonSESBounces;
 class MailTrackerController extends Controller
 {
     public function getT($hash)

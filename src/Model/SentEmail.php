@@ -17,5 +17,7 @@ class SentEmail extends Model
     	'content',
     	'opens',
     	'clicks',
+		'bounces',
+		'bounce_type'
     ];
 }

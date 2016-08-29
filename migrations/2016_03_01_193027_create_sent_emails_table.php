@@ -25,6 +25,8 @@ class CreateSentEmailsTable extends Migration
             $table->text('content');
             $table->integer('opens');
             $table->integer('clicks');
+            $table->integer('bounces');
+            $table->string('bounce_type');
         });
     }
 
