@@ -108,7 +108,6 @@ class MailTracker implements \Swift_Events_SendListener {
         // Replace "/" with "$"
         return str_replace("/", "$", base64_encode($url));
     }
-
     static public function cheakIfCampaigSendedbefore($user_id, $campaign_id) {
         return Model\SentEmail::where(
                                 [
@@ -118,9 +117,9 @@ class MailTracker implements \Swift_Events_SendListener {
                         ->first();
     }
     static public function getBounces($data) {
-        $bounces = new AmazonSESBounces();
-        $bounces->setGmailCredentials(
-                $data['email'], $data['password']);
+        $bounces = new Bounces();
+        $bounces->setData($data);
+        $result = array();
         if ($bounces->connect()) {
             $response = $bounces->getEmailsThatBounced();
             if (count($response) > 0) {
@@ -132,22 +131,19 @@ class MailTracker implements \Swift_Events_SendListener {
                     ])->update(
                             [
                                 'bounces' => 1,
-                                'bounce_type' => 'Hard Bounce'
-                    ]);
+                                'bounce_type' => 'Hard Bounce']);
                 }
                 $bounces->deleteEmailsFound();
             }
             $bounces->end();
-            return [
-                'status' => 'sucess',
-                'message' => 'Bounces Emails Inserted to data Base'
-            ];
+            $result =  ['status' => 'sucess',
+                'message' => 'Bounces Emails Inserted to data Base'];
         } else {
-            return [
+            $result =  [
                 'status' => 'fail',
                 'message' => $bounces->getErrors()
             ];
         }
+        return $result;
     }
-
 }
