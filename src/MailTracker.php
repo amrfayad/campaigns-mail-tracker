@@ -116,9 +116,9 @@ class MailTracker implements \Swift_Events_SendListener {
                         ])
                         ->first();
     }
-    static public function getBounces($data) {
+    static public function getBounces($config) {
         $bounces = new Bounces();
-        $bounces->setData($data);
+        /*$bounces->setData($data);
         $result = array();
         if ($bounces->connect()) {
             $response = $bounces->getEmailsThatBounced();
@@ -144,6 +144,12 @@ class MailTracker implements \Swift_Events_SendListener {
                 'message' => $bounces->getErrors()
             ];
         }
-        return $result;
+        return $result;*/
+        $bounces->setImapClinet($config);
+        return dd($bounces->getMessages());
+        /*$bounces->connect();
+        /*$imapClient = new ImapClient($config);
+        $con = $imapClient->connect();
+        return $bounces->getImapClient() ;*/
     }
 }
