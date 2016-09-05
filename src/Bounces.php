@@ -79,7 +79,6 @@ class Bounces {
         $response = array();
         $headers = @imap_headers($this->c);
         $max_message_count = sizeof($headers);
-
         $count = 1;
         while ($count <= $max_message_count) {
             $headerinfo = @imap_headerinfo($this->c, $count);
@@ -88,17 +87,19 @@ class Bounces {
                 $body = @imap_body($this->c, $count);
                 $user_id = $this->getUserId($body);
                 $campaign_id = $this->getCampaignId($body);
-                if ($user_id && $campaign_id) {
+                $bounce_type = $this->getBounceType($body);
+                //if ($user_id && $campaign_id) {
                     $this->messagesFound[] = $count;
                     $response[] = array(
                         'user_id' => $user_id,
-                        'campaign_id' => $campaign_id
+                        'campaign_id' => $campaign_id,
+                        'bounce_type' => $bounce_type
                     );
-                }
+               // }
             }
 
             $count++;
-        }
+        }die();
         return $response;
     }
     function getCampaignId($body) {
@@ -152,4 +153,15 @@ class Bounces {
         imap_close($this->c);
     }
 
+    function getBounceType($body)
+    {
+        $rules = config('campaigns-mail-tracker.bounce-types');
+        foreach ($rules as $rule)
+        {
+            if (preg_match($rule['regex'], $body)) {
+                    return $rule['bounceType'];
+                }
+        }
+        return null;
+    }
 }
