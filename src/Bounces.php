@@ -50,11 +50,11 @@ class Bounces {
     function getMessages($criteria = 'SUBJECT "*delivery*"') {
         return $this->imapClient->getResult($criteria);
         
-    }/*
-    function getHeaders() {
-        return $this->imapClient->getHeaders($this->messagesFound);
-    }*/
-    
-    
-    
+    }
+    function deleteEmailsFound(){
+        $this->imapClient->deleteEmailsFound();
+    }
+    function getConnectionStatus(){
+        return $this->imapClient->getConnectionStatus();
+    }
 }

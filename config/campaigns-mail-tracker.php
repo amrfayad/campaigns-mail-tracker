@@ -1089,7 +1089,7 @@ return [
              */
             array(
                 'bounceType' => 'hard',
-                'regex' => "/Delivery to the following recipients failed/i"
+                'regex' => "/Delivery to the following recipient(s)? failed/i"
             ),
             /**
              * Triggered by:
@@ -1393,6 +1393,11 @@ return [
                 'bounceType' => 'hard',
                 'regex' => "/<(\S+@\S+\w)>.*\n?.*does not accept[^\r\n]*non-Western/i",
                 'regexEmailIndex' => 1,
+            ),
+            array(
+                'bounceType' => 'hard',
+                'regex' => "/<(\S+@\S+\w)>.*\n?.*does not accept[^\r\n]*non-Western/i",
+                'regexEmailIndex' => 1,
             )
         ],
         'COMMON_RULES' => [
@@ -1578,4 +1583,3 @@ return [
         ]
     ]
 ];
-

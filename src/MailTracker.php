@@ -118,10 +118,11 @@ class MailTracker implements \Swift_Events_SendListener {
     }
     static public function getBounces($config) {
         $bounces = new Bounces();
-        /*$bounces->setData($data);
+        $bounces->setImapClinet($config);
+        $bounces->connect();
         $result = array();
-        if ($bounces->connect()) {
-            $response = $bounces->getEmailsThatBounced();
+        if ($bounces->getConnectionStatus()) {
+            $response = $bounces->getMessages();
             if (count($response) > 0) {
                 foreach ($response as $value) {
                     Model\SentEmail::where(
@@ -131,9 +132,9 @@ class MailTracker implements \Swift_Events_SendListener {
                     ])->update(
                             [
                                 'bounces' => 1,
-                                'bounce_type' => 'Hard Bounce']);
+                                'bounce_type' => $value['bounceType']]);
                 }
-                $bounces->deleteEmailsFound();
+                //$bounces->deleteEmailsFound();
             }
             $bounces->end();
             $result =  ['status' => 'sucess',
@@ -144,8 +145,8 @@ class MailTracker implements \Swift_Events_SendListener {
                 'message' => $bounces->getErrors()
             ];
         }
-        return $result;*/
-        $bounces->setImapClinet($config);
+        return $result;
+       /* $bounces->setImapClinet($config);
         return dd($bounces->getMessages());
         /*$bounces->connect();
         /*$imapClient = new ImapClient($config);

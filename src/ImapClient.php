@@ -57,7 +57,7 @@ Class ImapClient{
      */
     protected $read_only = false;
     /**
-     * Messages 
+     * Messages That Has Been Found
      * @var array
      */
     protected $messages ; 
@@ -141,6 +141,15 @@ Class ImapClient{
         }
         return $this;
     }
+    
+    
+    public function getConnectionStatus(){
+        if($this->connection)
+        {
+            return true;
+        }
+        return false;
+    }
     /**
      * Disconnect from server.
      *
@@ -208,8 +217,7 @@ Class ImapClient{
         return imap_fetchheader($this->connection, $messageId);
     }
     public function deleteMessage($messageId){
-        //return imap_delete($this->connection, $messageId);
-        return $messageId;
+        return imap_delete($this->connection, $messageId);
     }
     public function getBody($messageId) {
         return imap_body($this->connection, $messageId);
@@ -220,7 +228,6 @@ Class ImapClient{
              $this->getMessages($criteria);
         }
         $result = array();
-        $matches = array();
         foreach ($this->messages as $messageId){
             $header = $this->getHeader($messageId);
             if (empty($header)) {
@@ -233,28 +240,19 @@ Class ImapClient{
                 if (preg_match("/multipart\/report/is", $matches[1]) &&
                     preg_match("/report-type=[\"']?delivery-status[\"']?/is", $matches[1]))
                         {
-                            echo "DNS Process\n";
                             $result[] = $this->processDsn($messageId);
                         }
                 else{
-                    
-                            echo "Body Process\n";
                         $result[] = $this->processBody($messageId);
                     }
            }else
             {
-               echo "Process body\n";
                $result[] = $this->processBody($messageId);
             }
         }
         return $result;
-        
     }
-    
-    
-    
-    protected function processDsn($messageId)
-    {
+    protected function processDsn($messageId){
         $result = array(
             'user_id'       => null,
             'campaign_id'   => null,
@@ -343,8 +341,7 @@ Class ImapClient{
         $result['diagnosticCode'] = $diagnosticCode;
         return $result;
     }
-    protected function processBody($messageId)
-    {
+    protected function processBody($messageId){
         $result    = array(
             'user_id'       => null,
             'campaign_id'   => null,
@@ -354,7 +351,6 @@ Class ImapClient{
             'statusCode'    => null,
             'diagnosticCode'=> null,
         );
-        
         $body = null;
         $structure = imap_fetchstructure($this->connection, $messageId);
         if (in_array($structure->type, array(0, 1))) {
@@ -399,12 +395,21 @@ Class ImapClient{
                 }
             }    
         }
-        var_dump($body);
+        if(!$foundMatch)
+        {
+            foreach ($rules['DSN_MESSAGE_RULES'] as $rule) {
+                        if (preg_match($rule['regex'], $body, $matches)) {
+                            $foundMatch = true;
+                            $result['bounceType'] = $rule['bounceType'];
+                            break;
+                        }
+        }
+        }
         $result['user_id'] = $this->getUserId($body);
         $result['campaign_id'] = $this->getCampaignId($body);
         return $result;
     }
-    function getCampaignId($body) {
+    public function getCampaignId($body) {
         $lines = explode("\r\n", $body);
         foreach ($lines as $line) {
             $lookfor = 'campaignID: ';
@@ -415,8 +420,7 @@ Class ImapClient{
         }
         return null;
     }
-
-    function getUserId($body) {
+    public function getUserId($body) {
         $lines = explode("\r\n", $body);
         foreach ($lines as $line) {
             $lookfor = 'userID: ';
@@ -427,10 +431,23 @@ Class ImapClient{
         }
         return null;
     }
-    public function  getRules()
-    {
+    public function getRules(){
         $rules = config('campaigns-mail-tracker.bounce-types');
         return $rules;
     }
-    
+    /**
+    * deletes all emails that have been previously found
+    */
+    function deleteEmailsFound(){
+        if(!$this->connection)
+        {
+            if($this->messages)
+            {
+                foreach ($this->messages as $messageId)
+                {
+                    $this->deleteMessage($messageId);
+                }
+            }
+        }
+    }
 }
