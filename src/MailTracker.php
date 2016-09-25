@@ -8,7 +8,7 @@ class MailTracker implements \Swift_Events_SendListener {
     protected $user_id;
     protected $campaign_id;
 
-    public function __construct($user_id, $campaign_id) {
+    public function __construct($user_id = null , $campaign_id = null) {
         $this->user_id = $user_id;
         $this->campaign_id = $campaign_id;
     }
@@ -108,7 +108,7 @@ class MailTracker implements \Swift_Events_SendListener {
         // Replace "/" with "$"
         return str_replace("/", "$", base64_encode($url));
     }
-    static public function cheakIfCampaigSendedbefore($user_id, $campaign_id) {
+    public function cheakIfCampaigSendedbefore($user_id, $campaign_id) {
         return Model\SentEmail::where(
                                 [
                                     ['user_id', $user_id],
@@ -152,5 +152,9 @@ class MailTracker implements \Swift_Events_SendListener {
         /*$imapClient = new ImapClient($config);
         $con = $imapClient->connect();
         return $bounces->getImapClient() ;*/
+    }
+    public function recordSentEmail($user_id , $campaign_id) {
+        $this->user_id = $user_id;
+        $this->campaign_id = $campaign_id;
     }
 }
